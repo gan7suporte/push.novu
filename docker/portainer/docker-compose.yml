@@ -2,9 +2,9 @@
 #
 # Diferenças em relação ao compose oficial:
 # - containers com prefixo "novu-" para não confundir com as outras stacks
-# - URLs montadas aqui a partir de NOVU_HOST, pois o Portainer não expande
-#   variáveis que referenciam outras variáveis dentro do .env
-# - portas internas fixas; só as portas publicadas são configuráveis
+# - URLs públicas completas (DASHBOARD_URL, API_URL, WS_URL), pois ficam atrás do
+#   Nginx Proxy Manager com HTTPS e o Portainer não expande variáveis aninhadas no .env
+# - portas internas fixas; só as portas publicadas (usadas pelo proxy) são configuráveis
 name: novu
 
 x-logging: &logging
@@ -63,8 +63,9 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
-      API_ROOT_URL: ${NOVU_HOST:?defina NOVU_HOST}:${API_PORT:-3000}
-      FRONT_BASE_URL: ${NOVU_HOST}:${DASHBOARD_PORT:-4000}
+      API_ROOT_URL: ${API_URL:?defina API_URL}
+      FRONT_BASE_URL: ${DASHBOARD_URL:?defina DASHBOARD_URL}
+      DASHBOARD_URL: ${DASHBOARD_URL}
       MONGO_URL: *mongo-url
       MONGO_MIN_POOL_SIZE: 5
       MONGO_MAX_POOL_SIZE: 10
@@ -113,6 +114,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3004
       API_ROOT_URL: http://api:3000
+      FRONT_BASE_URL: ${DASHBOARD_URL}
+      DASHBOARD_URL: ${DASHBOARD_URL}
       MONGO_URL: *mongo-url
       MONGO_MIN_POOL_SIZE: 5
       MONGO_MAX_POOL_SIZE: 10
@@ -181,8 +184,9 @@ services:
     restart: unless-stopped
     logging: *logging
     environment:
-      VITE_API_HOSTNAME: ${NOVU_HOST}:${API_PORT:-3000}
-      VITE_WEBSOCKET_HOSTNAME: ${NOVU_HOST}:${WS_PORT:-3002}
+      VITE_API_HOSTNAME: ${API_URL}
+      VITE_WEBSOCKET_HOSTNAME: ${WS_URL:?defina WS_URL}
+      VITE_WEBSOCKET_TYPE: self-hosted
     ports:
       - ${DASHBOARD_PORT:-4000}:4000
     healthcheck:
