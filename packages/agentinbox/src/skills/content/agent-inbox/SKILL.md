@@ -17,9 +17,9 @@ triggers:
 
 `npx @agentinbox/cli` gives your agent an inbox on Telegram, Slack and email.
 People write to it, and it writes to them. Every command has the shape
-`npx @agentinbox/cli <command> <action>`, and the six commands are `setup`,
-`login`, `inbox`, `contact`, `channel` and `skill`. Most of your work is under
-`inbox`:
+`npx @agentinbox/cli <command> <action>`, and the seven commands are `setup`,
+`login`, `connect`, `inbox`, `contact`, `channel` and `skill`. Most of your
+work is under `inbox`:
 
 - **Read**: `list` the conversations, `show` one, mark it `read`, `resolve` it.
 - **Start a conversation**: `send` a message, or `send ask`, `send approve` or
@@ -66,6 +66,21 @@ looping. Never attempt to configure it on the operator's behalf — you don't
 have their Telegram/Slack/email credentials, and setup is interactive by
 design.
 
+The one exception is a one-time code the operator gave you, usually in a
+prompt from agentinbox.md. Run the command it came with:
+
+```bash
+npx @agentinbox/cli connect atlas --code BCDF-GHJK
+```
+
+`atlas` is the agent's address before the `@`. The code works once, for 10
+minutes; after that every command on this computer acts as that agent. A used,
+expired or wrong code exits 1 and says which: ask the operator for a new code
+rather than guessing, since the agent stops taking codes for a while after a
+few wrong ones. If this computer is already set up, `connect` stops without
+using the code and asks for `--yes`: tell the operator first, and add `--yes`
+only once they agree.
+
 `setup` asks for a name and an email address, creates the agent inbox, and
 prints its address. It then asks whether to also connect Telegram or Slack;
 Enter skips. `channel add telegram` or `channel add slack` connects one more
@@ -103,6 +118,18 @@ To keep your channels and continue, run: npx @agentinbox/cli login
 Stop retrying, surface the message where the operator will see it, and wait.
 The operator runs `login` themselves: it signs them in (or up) on
 agentinbox.md in the browser and keeps their channels. Don't run it for them.
+
+The operator can pause the agent on agentinbox.md. People's messages keep
+arriving and wait, but until the operator resumes it there, every command that
+reads the inbox or sends exits 1 with:
+
+```
+This agent is paused: it can’t read its inbox or send until its operator resumes it on agentinbox.md. Messages people send meanwhile wait in the inbox.
+```
+
+Stop retrying: the operator paused the agent on purpose. Tell whoever is
+reachable (chat, PR description, logs) that it is paused, and pick the inbox
+up again once they resume it.
 
 In sandboxes and containers with no config file, the CLI is fully operational
 when `INBOX_SECRET_KEY` and `INBOX_TO` are set in the environment (optionally
@@ -293,7 +320,9 @@ npx @agentinbox/cli inbox send choose "Which environment?" \
 ## The inbox: messages people send you first
 
 Anyone can message your agent without being asked — on Telegram, Slack, or
-email. Everything said in one place on one channel is one **conversation**.
+email — unless the operator lets only contacts reach it; then messages from
+strangers never arrive. Everything said in one place on one channel is one
+**conversation**.
 Nothing is lost while you're not looking: a message that doesn't answer a
 pending question stays unread, and the sender gets no automatic reply.
 
