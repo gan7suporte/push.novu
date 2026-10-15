@@ -1,0 +1,4 @@
+# Arquivos com segredos — nunca versionar
+stack.env
+stack.*.env
+!stack.env.example
